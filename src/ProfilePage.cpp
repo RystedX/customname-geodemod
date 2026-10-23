@@ -11,13 +11,9 @@ class $modify(ProfilePage) {
         if (!m_usernameLabel) 
             return true;
 
-        std::string accountName = GJAccountManager::get()->m_username;
-        std::string labelName = m_usernameLabel->getString();
-
-        // Properly compare std::strings instead of raw pointers
-        auto isOwnProfile = (ownProfile || (accountName == labelName));
-
-        log::info("Custom Name Profile Page: GJ Account Name is \"{}\". The Label Name is \"{}\". ownprofile is \"{}\". Combined ownprofile is \"{}\"", accountName, labelName, ownProfile, isOwnProfile);
+        // Safely check if it's your own profile using account ID matching
+        int currentAccountID = GJAccountManager::get()->m_accountID;
+        bool isOwnProfile = ownProfile || (accountID == currentAccountID);
 
         if (isOwnProfile) {
             auto value = Mod::get()->getSettingValue<std::string>("thename");
@@ -30,16 +26,12 @@ class $modify(ProfilePage) {
     void loadPageFromUserInfo(GJUserScore* user) {
         ProfilePage::loadPageFromUserInfo(user);
 
-        if (!m_usernameLabel) 
+        if (!m_usernameLabel || !user) 
             return;
 
-        std::string accountName = GJAccountManager::get()->m_username;
-        std::string labelName = m_usernameLabel->getString();
-
-        // Properly compare std::strings instead of raw pointers
-        auto isOwnProfile = (m_ownProfile || (accountName == labelName));
-        
-        log::info("Custom Name Profile Page: GJ Account Name is \"{}\". The Label Name is \"{}\". m_ownProfile is \"{}\". Combined ownprofile is \"{}\"", accountName, labelName, m_ownProfile, isOwnProfile);
+        // Safely check using m_ownProfile and matching account IDs
+        int currentAccountID = GJAccountManager::get()->m_accountID;
+        bool isOwnProfile = m_ownProfile || (user->m_accountID == currentAccountID);
 
         if (isOwnProfile) {
             auto value = Mod::get()->getSettingValue<std::string>("thename");
