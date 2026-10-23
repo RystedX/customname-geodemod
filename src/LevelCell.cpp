@@ -7,25 +7,19 @@ class $modify(LevelCell) {
     void loadCustomLevelCell() {
         LevelCell::loadCustomLevelCell();
         
-        auto mainObj = this->getChildByID("main-layer");
-        if (mainObj == nullptr) {
-            log::warn("Failed to move on because \"main-layer\" doesnt exist LevelCell");
-            return;
+        // Safely search using querySelector or sequential getChildByID
+        auto creatorname = this->querySelector("main-layer > main-menu > creator-name");
+        if (!creatorname) {
+            auto mainObj = this->getChildByID("main-layer");
+            if (!mainObj) return;
+            
+            auto menuStuff = mainObj->getChildByID("main-menu");
+            if (!menuStuff) return;
+            
+            creatorname = menuStuff->getChildByID("creator-name");
         }
         
-        auto menuStuff = mainObj->getChildByID("main-menu");
-        if (menuStuff == nullptr) {
-            log::warn("Failed to move on because \"main-menu\" doesnt exist in \"main-layer\" -> LevelCell");
-            return;
-        }
-        
-        auto creatorname = menuStuff->getChildByID("creator-name");
-        if (creatorname == nullptr) {
-            log::warn("Failed to move on because \"creator-name\" doesnt exist in \"main-menu\" -> \"main-layer\" -> LevelCell");
-            return;
-        }
-        
-        if (creatorname->getChildrenCount() == 0) {
+        if (!creatorname || creatorname->getChildrenCount() == 0) {
             return;
         }
         
@@ -45,11 +39,12 @@ class $modify(LevelCell) {
         } else {
             // Ensure string length is enough for substr to avoid out-of-range exceptions
             if (objString.length() >= 3) {
-                if (accountname == objString.substr(3, -1)) {
+                // Fixed: Removed unsafe '-1' parameter from substr
+                if (accountname == objString.substr(3)) {
                     auto value = Mod::get()->getSettingValue<std::string>("thename");
                     obj->setString(fmt::format("By {}", value).c_str());
                 }
             }
         }
-	}
+    }
 };
