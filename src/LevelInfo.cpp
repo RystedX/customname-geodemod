@@ -5,13 +5,15 @@
 using namespace geode::prelude;
 
 class $modify(LevelInfoLayer) {
-
-	bool init(GJGameLevel* p0, bool p1) {
-		if (!LevelInfoLayer::init(p0, p1))
-			return false;
+    bool init(GJGameLevel* p0, bool p1) {
+        if (!LevelInfoLayer::init(p0, p1))
+            return false;
 
         // Safely check and retrieve the creator-info-menu and creator-name nodes
-        auto menuNode = this->getChildByID("creator-info-menu");
+        auto menuNode = this->querySelector("creator-info-menu");
+        if (!menuNode) {
+            menuNode = this->getChildByID("creator-info-menu");
+        }
         if (menuNode == nullptr) {
             return true;
         }
@@ -34,13 +36,14 @@ class $modify(LevelInfoLayer) {
             return true;
         }
 
-        if (accountname != objString.substr(3, -1)) {
+        // Fixed: Removed unsafe '-1' parameter from substr
+        if (accountname != objString.substr(3)) {
             return true;
         }
 
         auto value = Mod::get()->getSettingValue<std::string>("thename");
         obj->setString(fmt::format("By {}", value).c_str());
 
-		return true;
-	}
+        return true;
+    }
 };
