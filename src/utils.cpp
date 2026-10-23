@@ -23,8 +23,7 @@ bool Utils::nameTransferred() {
            loader->getLoadedMod(displayNameModID.c_str())->hasSavedValue("nametransferred");
 }
 
-// Mantenemos esta por compatibilidad si otro archivo la llama, 
-// pero internamente apunta a la misma lógica correcta.
+// Keep this for compatibility if called by other files
 bool Utils::nameTransfered() {
     return nameTransferred();
 }
