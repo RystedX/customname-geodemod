@@ -6,66 +6,44 @@ using namespace geode::prelude;
 class $modify(CommentCell) {
     void loadFromComment(GJComment* p0) {
         CommentCell::loadFromComment(p0);
-        
-        // Ensure the cell has enough children before accessing index 1 to prevent crashes
-        if (this->getChildrenCount() <= 1) {
-            return;
-        }
-        
-        auto mainObj = typeinfo_cast<CCLayer*>(this->getChildren()->objectAtIndex(1));
-        if (mainObj == nullptr) {
-            log::info("Failed to move on because \"the CCLayer in CommentCell (index 1)\" doesnt exist CommentCell");
-            return;
-        }
-        
-        auto profilename = typeinfo_cast<CCLabelBMFont*>(mainObj->getChildByID("username-label"));
-        // If is profile comment
-        if (profilename != nullptr) {
-            std::string objString(profilename->getString());
-            std::string accountname = GJAccountManager::get()->m_username;
-            if (accountname == objString) {
-                auto value = Mod::get()->getSettingValue<std::string>("thename");
-                profilename->setString(value.c_str());
-            }
-            return;
-        }
-        
-        // Continue not a profile comment
-        auto menuStuff = mainObj->getChildByID("main-menu");
-        if (menuStuff == nullptr) {
-            log::info("Failed to move on because \"main-menu\" doesn't exist in \"the CCLayer in CommentCell (index 1)\" -> CommentCell");
-            return;
-        }
-        auto userMenu = menuStuff->getChildByID("user-menu");
-        if (userMenu == nullptr) {
-            log::info("Failed to move on because \"user-menu\" doesn't exist in \"main-menu\" -> \"the CCLayer in CommentCell (index 1)\" -> CommentCell");
-            return;
-        }
-        auto usernameMenu = userMenu->getChildByID("username-menu");
-        if (usernameMenu == nullptr) {
-            log::info("Failed to move on because \"username-menu\" doesn't exist in \"user-menu\" -> \"main-menu\" -> \"the CCLayer in CommentCell (index 1)\" -> CommentCell");
-            return;
-        }
-        auto creatorname = usernameMenu->getChildByID("username-button");
-        if (creatorname == nullptr) {
-            log::info("Failed to move on because \"username-button\" doesn't exist in \"username-menu\" -> \"user-menu\" -> \"main-menu\" -> \"the CCLayer in CommentCell (index 1)\" -> CommentCell");
-            return;
-        }
-        
-        if (creatorname->getChildrenCount() == 0) {
-            return;
-        }
-        
-        auto obj = typeinfo_cast<CCLabelBMFont*>(creatorname->getChildren()->objectAtIndex(0));
-        if (obj == nullptr) {
-            return;
-        }
-        
-        std::string objString(obj->getString());
+
+        if (!p0) return;
+
         std::string accountname = GJAccountManager::get()->m_username;
-        if (accountname == objString) {
-            auto value = Mod::get()->getSettingValue<std::string>("thename");
-            obj->setString(value.c_str());
+        if (accountname.empty()) return;
+
+        auto value = Mod::get()->getSettingValue<std::string>("thename");
+
+        // 1. Try to find profile comment label directly
+        if (auto profilename = this->querySelector("username-label")) {
+            if (auto label = typeinfo_cast<CCLabelBMFont*>(profilename)) {
+                if (accountname == label->getString()) {
+                    label->setString(value.c_str());
+                }
+                return;
+            }
+        }
+
+        // 2. Search for level comment username button safely
+        auto usernameBtn = this->querySelector("main-menu > user-menu > username-menu > username-button");
+        if (!usernameBtn) {
+            // Fallback for direct node search if nested hierarchy differs
+            usernameBtn = this->querySelector("username-button");
+        }
+
+        if (usernameBtn) {
+            // Check label inside CCMenuItemLabel / CCMenuItemSpriteExtra
+            CCLabelBMFont* label = nullptr;
+
+            if (auto menuItem = typeinfo_cast<CCMenuItemLabel*>(usernameBtn)) {
+                label = typeinfo_cast<CCLabelBMFont*>(menuItem->getLabel());
+            } else if (usernameBtn->getChildrenCount() > 0) {
+                label = typeinfo_cast<CCLabelBMFont*>(usernameBtn->getChildren()->objectAtIndex(0));
+            }
+
+            if (label && accountname == label->getString()) {
+                label->setString(value.c_str());
+            }
         }
     }
 };
